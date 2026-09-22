@@ -8,6 +8,9 @@ import {
   Message,
   Artifact,
   SourceCitation,
+  StatusData,
+  ProviderData,
+  DoneData,
   fetchSessions,
   createSession,
   fetchSessionDetails,
@@ -117,18 +120,18 @@ export const App: React.FC = () => {
     let streamedContent = '';
 
     await streamChat(text, activeSessionId, currentProvider, {
-      onStatus: (statusData) => {
+      onStatus: (statusData: StatusData) => {
         if (statusData.status === 'searching') {
           setRetrievalStatus('Searching Lenny transcript archive...');
         } else if (statusData.status === 'retrieved') {
-          setRetrievalStatus(`Found ${statusData.chunk_count} verified transcript passages.`);
+          setRetrievalStatus(`Found ${statusData.chunk_count ?? 0} verified transcript passages.`);
         }
       },
-      onProvider: (prov) => {
+      onProvider: (prov: ProviderData) => {
         if (prov.provider) setCurrentProvider(prov.provider);
         if (prov.fallback) setIsFallback(true);
       },
-      onText: (token) => {
+      onText: (token: string) => {
         streamedContent += token;
         setMessages((prev) => {
           const filtered = prev.filter((m) => m.id !== assistantMsgId);
@@ -137,31 +140,30 @@ export const App: React.FC = () => {
             {
               id: assistantMsgId,
               session_id: activeSessionId || '',
-              role: 'assistant',
+              role: 'assistant' as const,
               content: streamedContent,
               created_at: new Date().toISOString()
             }
           ];
         });
       },
-      onArtifact: (art) => {
+      onArtifact: (art: Artifact) => {
         setActiveArtifact(art);
       },
-      onDone: (doneData) => {
+      onDone: (doneData: DoneData) => {
         setIsStreaming(false);
         setRetrievalStatus(null);
         if (doneData.session_id && !activeSessionId) {
           setActiveSessionId(doneData.session_id);
           loadSessions();
         }
-        // Update final sources on message
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantMsgId ? { ...m, sources: doneData.sources } : m
           )
         );
       },
-      onError: (err) => {
+      onError: (err: Error) => {
         setIsStreaming(false);
         setRetrievalStatus(null);
         setMessages((prev) => [
@@ -169,7 +171,7 @@ export const App: React.FC = () => {
           {
             id: `err-${Date.now()}`,
             session_id: activeSessionId || '',
-            role: 'assistant',
+            role: 'assistant' as const,
             content: `Error: Unable to complete request (${err.message}). Please check backend status.`,
             created_at: new Date().toISOString()
           }

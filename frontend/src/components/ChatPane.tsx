@@ -200,7 +200,7 @@ export const ChatPane: React.FC<ChatPaneProps> = ({
                   {m.sources && m.sources.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Sources:</span>
-                      {m.sources.map((src, i) => (
+                      {m.sources.map((src: SourceCitation, i: number) => (
                         <button
                           key={i}
                           className="citation-badge"
